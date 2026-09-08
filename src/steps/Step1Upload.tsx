@@ -1,95 +1,163 @@
-import { useRef, useState, useCallback, type FC, type DragEvent, type ChangeEvent } from 'react'
+import { useRef, useState, useCallback, type FC, type DragEvent, type ChangeEvent, type ReactNode } from 'react'
 import { useApp } from '../context/AppContext'
 import { parseOledFile } from '../utils/parseData'
+import { parseIvDocx } from '../utils/parseIvDocx'
 import type { ParsedData } from '../types'
 import './Step1Upload.css'
 
 const Step1Upload: FC = () => {
   const { state, dispatch } = useApp()
-  const { parsedData } = state
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [dragging, setDragging] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { parsedData, ivData } = state
+  const [spectraError, setSpectraError] = useState<string | null>(null)
+  const [ivError, setIvError] = useState<string | null>(null)
 
-  const processFile = useCallback((file: File) => {
-    setError(null)
+  const readSpectra = useCallback((file: File) => {
+    setSpectraError(null)
     const reader = new FileReader()
     reader.onload = e => {
       try {
         const text = e.target?.result as string
-        const data = parseOledFile(text, file.name)
-        dispatch({ type: 'SET_PARSED_DATA', payload: data })
+        dispatch({ type: 'SET_PARSED_DATA', payload: parseOledFile(text, file.name) })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to parse file.')
+        setSpectraError(err instanceof Error ? err.message : 'Не вдалося розібрати файл.')
       }
     }
     reader.readAsText(file)
   }, [dispatch])
 
-  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) processFile(file)
-  }, [processFile])
-
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) processFile(file)
-  }, [processFile])
-
-  const handleNext = () => {
-    dispatch({ type: 'SET_STEP', payload: 2 })
-  }
-
-  const handleReset = () => {
-    dispatch({ type: 'RESET' })
-    setError(null)
-  }
+  const readIv = useCallback((file: File) => {
+    setIvError(null)
+    const reader = new FileReader()
+    reader.onload = e => {
+      try {
+        const buffer = e.target?.result as ArrayBuffer
+        dispatch({ type: 'SET_IV_DATA', payload: parseIvDocx(buffer, file.name) })
+      } catch (err) {
+        setIvError(err instanceof Error ? err.message : 'Не вдалося розібрати документ.')
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  }, [dispatch])
 
   return (
     <div className="step1">
-      {!parsedData ? (
-        <>
-          <div
-            className={`dropzone${dragging ? ' dropzone--active' : ''}`}
-            onClick={() => inputRef.current?.click()}
-            onDragOver={e => { e.preventDefault(); setDragging(true) }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={handleDrop}
-            role="button"
-            tabIndex={0}
-            onKeyDown={e => e.key === 'Enter' && inputRef.current?.click()}
-          >
-            <div className="dropzone__icon">📂</div>
-            <p className="dropzone__title">Drop your data file here</p>
-            <p className="dropzone__sub">or click to browse — tab-separated .txt file</p>
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".txt,.tsv,.dat"
-              style={{ display: 'none' }}
-              onChange={handleChange}
-            />
-          </div>
-          {error && <p className="step1__error">{error}</p>}
-        </>
-      ) : (
-        <DataPreview data={parsedData} onReset={handleReset} onNext={handleNext} />
+      <div className="slots">
+        <Slot
+          title="Спектри випромінювання"
+          hint="файл .txt з табуляцією — пара λ / значення на кожен набір"
+          accept=".txt,.tsv,.dat"
+          icon="📈"
+          error={spectraError}
+          onFile={readSpectra}
+          summary={parsedData && `${parsedData.rows.length} рядків · ${parsedData.conditions.length} наборів`}
+          fileName={parsedData?.fileName}
+          onClear={() => { dispatch({ type: 'CLEAR_PARSED_DATA' }); setSpectraError(null) }}
+        />
+        <Slot
+          title="Вимірювання ВАХ"
+          hint="файл .docx з приладу — розгортки V1 / I1 / I2"
+          accept=".docx"
+          icon="⚡"
+          error={ivError}
+          onFile={readIv}
+          summary={ivData && `${ivData.blocks.length} вимірів · по ${ivData.blocks[0].rows.length} точок`}
+          fileName={ivData?.fileName}
+          onClear={() => { dispatch({ type: 'SET_IV_DATA', payload: null }); setIvError(null) }}
+        />
+      </div>
+
+      {parsedData && (
+        <DataPreview data={parsedData} onNext={() => dispatch({ type: 'SET_STEP', payload: 2 })} />
       )}
     </div>
   )
 }
 
-interface DataPreviewProps {
-  data: ParsedData
-  onReset: () => void
-  onNext: () => void
+interface SlotProps {
+  title: string
+  hint: string
+  accept: string
+  icon: string
+  error: string | null
+  summary: string | null | undefined | false
+  fileName: string | undefined
+  onFile: (file: File) => void
+  onClear: () => void
+}
+
+const Slot: FC<SlotProps> = ({ title, hint, accept, icon, error, summary, fileName, onFile, onClear }) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) onFile(file)
+  }
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) onFile(file)
+    e.target.value = ''
+  }
+
+  const picker: ReactNode = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept={accept}
+      style={{ display: 'none' }}
+      onChange={handleChange}
+    />
+  )
+
+  if (fileName) {
+    return (
+      <div className="slot slot--filled">
+        <div className="slot__head">
+          <span className="slot__title">{title}</span>
+          <span className="slot__check">✓</span>
+        </div>
+        <span className="slot__file">{icon} {fileName}</span>
+        <span className="slot__summary">{summary}</span>
+        <div className="slot__actions">
+          <button className="btn btn--ghost" onClick={() => inputRef.current?.click()}>Замінити</button>
+          <button className="btn btn--ghost" onClick={onClear}>Прибрати</button>
+        </div>
+        {picker}
+      </div>
+    )
+  }
+
+  return (
+    <div className="slot">
+      <div className="slot__head">
+        <span className="slot__title">{title}</span>
+      </div>
+      <div
+        className={`dropzone${dragging ? ' dropzone--active' : ''}`}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragging(true) }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => e.key === 'Enter' && inputRef.current?.click()}
+      >
+        <div className="dropzone__icon">{icon}</div>
+        <p className="dropzone__title">Перетягніть файл сюди</p>
+        <p className="dropzone__sub">{hint}</p>
+        {picker}
+      </div>
+      {error && <p className="step1__error">{error}</p>}
+    </div>
+  )
 }
 
 const PREVIEW_ROWS = 20
 
-const DataPreview: FC<DataPreviewProps> = ({ data, onReset, onNext }) => {
+const DataPreview: FC<{ data: ParsedData; onNext: () => void }> = ({ data, onNext }) => {
   const preview = data.rows.slice(0, PREVIEW_ROWS)
 
   return (
@@ -97,11 +165,8 @@ const DataPreview: FC<DataPreviewProps> = ({ data, onReset, onNext }) => {
       <div className="preview__meta">
         <span className="preview__filename">📄 {data.fileName}</span>
         <span className="preview__stats">
-          {data.rows.length} rows · {data.conditions.length} conditions
+          {data.rows.length} рядків · {data.conditions.length} наборів
         </span>
-        <button className="btn btn--ghost" onClick={onReset}>
-          Change file
-        </button>
       </div>
 
       <div className="preview__table-wrap">
@@ -116,7 +181,7 @@ const DataPreview: FC<DataPreviewProps> = ({ data, onReset, onNext }) => {
             </tr>
             <tr>
               {data.conditions.flatMap((_, i) => [
-                <th key={`wl-${i}`} className="preview__th">λ (nm)</th>,
+                <th key={`wl-${i}`} className="preview__th">λ, нм</th>,
                 <th key={`val-${i}`} className="preview__th preview__th--value">Δ</th>,
               ])}
             </tr>
@@ -136,14 +201,14 @@ const DataPreview: FC<DataPreviewProps> = ({ data, onReset, onNext }) => {
         </table>
         {data.rows.length > PREVIEW_ROWS && (
           <p className="preview__more">
-            … {data.rows.length - PREVIEW_ROWS} more rows not shown
+            … ще {data.rows.length - PREVIEW_ROWS} рядків не показано
           </p>
         )}
       </div>
 
       <div className="preview__actions">
         <button className="btn btn--primary" onClick={onNext}>
-          Next →
+          Далі →
         </button>
       </div>
     </div>

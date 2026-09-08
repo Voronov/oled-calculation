@@ -1,9 +1,5 @@
 import type { ParsedData, DataRow } from '../types'
 
-/** Parse a tab-separated OLED data file.
- *  Each row: wl, val, wl, val, wl, val, wl, val, wl, val  (10 columns)
- *  Conditions header numbers are inferred from the first row column count.
- */
 export function parseOledFile(text: string, fileName: string): ParsedData {
   const lines = text
     .replace(/\r\n/g, '\n')
@@ -30,10 +26,9 @@ export function parseOledFile(text: string, fileName: string): ParsedData {
     rows.push({ wavelengths, values })
   }
 
-  if (rows.length === 0) throw new Error('No valid data rows found in file.')
+  if (rows.length === 0) throw new Error('У файлі не знайдено рядків з даними.')
 
   const numConditions = rows[0].wavelengths.length
-  // Default condition labels matching the image (6, 8, 10, 8, 10)
   const defaultLabels = [6, 8, 10, 8, 10]
   const conditions = defaultLabels.slice(0, numConditions)
 

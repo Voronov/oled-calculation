@@ -66,3 +66,20 @@
 .btn--primary:disabled { background: #93c5fd; border-color: #93c5fd; cursor: not-allowed; }
 .btn--ghost { background: #fff; color: #444; border-color: #ccc; }
 .btn--ghost:hover { background: #f5f5f5; }
+
+.cond-card__peak {
+  font-size: 10px;
+  color: #888;
+  font-family: Consolas, monospace;
+  margin-bottom: 2px;
+}
+.cond-card__peak--warn { color: #b45309; }
+
+.norm__waiting {
+  text-align: center;
+  padding: 28px 16px;
+  color: #888;
+  font-size: 13px;
+  background: #fff;
+  border: 1px dashed #d0d0d0;
+}

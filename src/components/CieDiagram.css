@@ -1,0 +1,25 @@
+.cie {
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  padding: 8px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cie__bar { display: flex; align-items: center; justify-content: space-between; }
+.cie__title { font-size: 12px; font-weight: 600; color: #444; }
+.cie__canvas { width: 100%; max-width: 560px; align-self: center; }
+
+.cie__tabs { display: flex; gap: 4px; }
+.cie__tab {
+  padding: 1px 8px;
+  font-size: 11px;
+  font-family: Consolas, monospace;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #888;
+}
+.cie__tab:hover { border-color: #999; color: #444; }
+.cie__tab--active {
+  background: #2563eb; border-color: #1d4ed8; color: #fff; font-weight: 600;
+}

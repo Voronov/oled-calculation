@@ -78,3 +78,26 @@
 .btn--primary:hover { background: #1d4ed8; }
 .btn--ghost   { background: #fff; color: #444; border-color: #ccc; }
 .btn--ghost:hover { background: #f5f5f5; }
+
+/* Upload slots */
+.slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 760px) { .slots { grid-template-columns: 1fr; } }
+
+.slot { display: flex; flex-direction: column; gap: 6px; }
+.slot--filled {
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  padding: 12px;
+}
+.slot__head { display: flex; align-items: center; justify-content: space-between; }
+.slot__title { font-size: 12px; font-weight: 600; color: #444; }
+.slot__check { color: #16a34a; font-weight: 700; }
+.slot__file { font-size: 13px; color: #1a1a1a; word-break: break-all; }
+.slot__summary { font-size: 12px; color: #888; }
+.slot__actions { display: flex; gap: 6px; margin-top: 4px; }
+.slot .dropzone { padding: 32px 16px; }

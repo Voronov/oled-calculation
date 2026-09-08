@@ -1,0 +1,41 @@
+.chart {
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  padding: 8px 12px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chart__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  /* leave room for the echarts toolbox drawn in the canvas corner */
+  padding-right: 76px;
+}
+
+.chart__title { font-size: 12px; font-weight: 600; color: #444; }
+
+.chart__switches { display: flex; gap: 4px; }
+
+.chart__switch {
+  padding: 1px 8px;
+  font-size: 11px;
+  font-family: Consolas, monospace;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #888;
+}
+.chart__switch:hover { border-color: #999; color: #444; }
+.chart__switch--on {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: #fff;
+  font-weight: 600;
+}
+
+.chart__canvas { width: 100%; }
+
+.chart__hint { font-size: 10px; color: #aaa; text-align: right; }

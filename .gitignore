@@ -23,13 +23,17 @@ dist-ssr
 *.sln
 *.sw?
 
-# Generated/temporary files
+# Lab source data, kept out of the repo
 extracted_images
 analyze_images.py
 oled-calc.txt
-oled2.txt
+/oled2.txt
 11.xlsx
 image_analysis_results.json
+temp
+
+# the app loads this at runtime, so it must be tracked
+!public/oled2.txt
 
 # Environment
 .env

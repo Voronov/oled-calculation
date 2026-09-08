@@ -1,6 +1,5 @@
-import type { XYPoint, ReferenceData, CalcResults, NormalizedData } from '../types'
+import type { XYPoint, ReferenceData, CalcResults, NormalizedData, LvParams } from '../types'
 
-/** Parse oled2.txt text → ReferenceData (cols 3-4 = eye, cols 5-6 = photodiode) */
 export function parseReferenceData(text: string): ReferenceData {
   const eye: XYPoint[] = []
   const photodiode: XYPoint[] = []
@@ -23,7 +22,6 @@ export function parseReferenceData(text: string): ReferenceData {
   return { eye, photodiode }
 }
 
-/** Linear interpolation — returns 0 outside the reference range */
 function interp(ref: XYPoint[], x: number): number {
   if (ref.length === 0) return 0
   if (x < ref[0].x || x > ref[ref.length - 1].x) return 0
@@ -39,7 +37,6 @@ function interp(ref: XYPoint[], x: number): number {
   return ref[lo].y + t * (ref[hi].y - ref[lo].y)
 }
 
-/** Trapezoidal integration of XYPoint array (must be sorted by x) */
 function trapz(pts: XYPoint[]): number {
   let area = 0
   for (let i = 0; i < pts.length - 1; i++) {
@@ -48,9 +45,14 @@ function trapz(pts: XYPoint[]): number {
   return area
 }
 
-/** Multiply two curves — interpolates ref onto oled's x grid */
 function multiplyWithRef(oled: XYPoint[], ref: XYPoint[]): XYPoint[] {
   return oled.map(pt => ({ x: pt.x, y: pt.y * interp(ref, pt.x) }))
+}
+
+export const DEFAULT_LV_PARAMS: LvParams = { a: 1.72, b: 0.000006, c: 33.64 }
+
+export function computeLv(Kr: number, FF: number, p: LvParams = DEFAULT_LV_PARAMS): number {
+  return Kr * ((p.a * 0.01 * 0.01) / (p.b * p.c * 0.0000001 * FF))
 }
 
 export function computeResults(
@@ -72,7 +74,6 @@ export function computeResults(
   const Kr = 683 * (T1 / T2)
   const FF = T0 / T2
 
-  // Project reference curves onto the OLED X grid so charts can overlay them
   const eyeOnOledGrid: XYPoint[] = oledPoints.map(pt => {
     const v = interp(ref.eye, pt.x)
     return { x: pt.x, y: v }
@@ -92,7 +93,6 @@ export function computeResults(
   }
 }
 
-/** Down-sample an XYPoint array to at most maxPts for chart rendering */
 export function downsample(pts: XYPoint[], maxPts = 400): XYPoint[] {
   if (pts.length <= maxPts) return pts
   const step = Math.ceil(pts.length / maxPts)
