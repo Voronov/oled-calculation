@@ -67,7 +67,11 @@ const Step1Upload: FC = () => {
       </div>
 
       {parsedData && (
-        <DataPreview data={parsedData} onNext={() => dispatch({ type: 'SET_STEP', payload: 2 })} />
+        <DataPreview
+          data={parsedData}
+          onConditionsChange={conditions => dispatch({ type: 'SET_CONDITIONS', payload: conditions })}
+          onNext={() => dispatch({ type: 'SET_STEP', payload: 2 })}
+        />
       )}
     </div>
   )
@@ -157,7 +161,13 @@ const Slot: FC<SlotProps> = ({ title, hint, accept, icon, error, summary, fileNa
 
 const PREVIEW_ROWS = 20
 
-const DataPreview: FC<{ data: ParsedData; onNext: () => void }> = ({ data, onNext }) => {
+interface DataPreviewProps {
+  data: ParsedData
+  onConditionsChange: (conditions: number[]) => void
+  onNext: () => void
+}
+
+const DataPreview: FC<DataPreviewProps> = ({ data, onConditionsChange, onNext }) => {
   const preview = data.rows.slice(0, PREVIEW_ROWS)
 
   return (
@@ -175,7 +185,14 @@ const DataPreview: FC<{ data: ParsedData; onNext: () => void }> = ({ data, onNex
             <tr>
               {data.conditions.map((cond, i) => (
                 <th key={i} colSpan={2} className="preview__th-group">
-                  V = {cond}
+                  V ={' '}
+                  <input
+                    type="number"
+                    step="any"
+                    className="preview__voltage"
+                    value={Number.isNaN(cond) ? '' : cond}
+                    onChange={e => onConditionsChange(data.conditions.map((c, j) => (j === i ? e.target.valueAsNumber : c)))}
+                  />
                 </th>
               ))}
             </tr>

@@ -24,9 +24,12 @@ export function parseReferenceData(text: string): ReferenceData {
 
 function interp(ref: XYPoint[], x: number): number {
   if (ref.length === 0) return 0
-  if (x < ref[0].x || x > ref[ref.length - 1].x) return 0
+  if (ref.length === 1) return ref[0].y
   let lo = 0
   let hi = ref.length - 1
+  // outside the range extrapolate linearly from the end segment, as Origin does
+  if (x < ref[0].x) hi = 1
+  else if (x > ref[hi].x) lo = hi - 1
   while (lo < hi - 1) {
     const mid = (lo + hi) >> 1
     if (ref[mid].x <= x) lo = mid

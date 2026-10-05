@@ -173,7 +173,7 @@ const IvParamsPanel: FC<IvParamsPanelProps> = ({ params, peak, onChange }) => {
           <span className={peak.saturated ? 'iv-param__warn' : 'iv-param__note'}>
             {peak.saturated
               ? `⚠ пік плаский на ${peak.widthNm.toFixed(0)} нм — впишіть λ вручну`
-              : `середина піка з кроку 2 (ширина ${peak.widthNm.toFixed(1)} нм)`}
+              : `максимум спектра з кроку 2 (ширина вершини ${peak.widthNm.toFixed(1)} нм)`}
           </span>
         )}
       </span>

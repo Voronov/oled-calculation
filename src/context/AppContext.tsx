@@ -44,6 +44,13 @@ function reducer(state: AppState, action: AppAction): AppState {
       else next[action.payload.index] = action.payload.baseline
       return { ...state, ivBaselines: next }
     }
+    case 'SET_CONDITIONS':
+      if (!state.parsedData) return state
+      return {
+        ...state,
+        parsedData: { ...state.parsedData, conditions: action.payload },
+        normalizedData: state.normalizedData && { ...state.normalizedData, conditions: action.payload },
+      }
     case 'CLEAR_PARSED_DATA':
       return {
         ...initialState,

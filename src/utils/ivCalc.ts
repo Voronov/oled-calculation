@@ -25,9 +25,13 @@ export interface PeakInfo {
 
 export function peakInfo(data: NormalizedData, conditionIndex: number): PeakInfo {
   let max = -Infinity
+  let maxWavelength = data.rows[0].wavelength
   for (const row of data.rows) {
     const v = row.normalizedValues[conditionIndex]
-    if (v > max) max = v
+    if (v > max) {
+      max = v
+      maxWavelength = row.wavelength
+    }
   }
 
   const threshold = max - PEAK_TOLERANCE * Math.abs(max)
@@ -37,7 +41,7 @@ export function peakInfo(data: NormalizedData, conditionIndex: number): PeakInfo
   const last = onPeak[onPeak.length - 1].wavelength
 
   return {
-    lambdaNm: (first + last) / 2,
+    lambdaNm: maxWavelength,
     widthNm: last - first,
     saturated: last - first > SATURATION_WIDTH_NM,
   }

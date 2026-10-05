@@ -45,6 +45,11 @@
   border-right: 1px solid #333;
 }
 .preview__th-group:last-child { border-right: none; }
+.preview__voltage {
+  width: 56px; padding: 1px 4px;
+  font: inherit; color: #fff; background: #333;
+  border: 1px solid #555; border-radius: 3px;
+}
 
 .preview__th {
   background: #f5f5f5; color: #444;
