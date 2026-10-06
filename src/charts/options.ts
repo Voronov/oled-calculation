@@ -80,8 +80,8 @@ export function spectraOption(
   return {
     grid: gridFor(1),
     legend: legend(),
-    xAxis: xAxis('λ, нм'),
-    yAxis: yAxis('нормована інтенсивність'),
+    xAxis: xAxis('λ, nm'),
+    yAxis: yAxis('normalized intensity'),
     series: labels.map((label, i) =>
       line(
         label,
@@ -108,17 +108,17 @@ export function referenceOption(
 ): EChartsOption {
   const refPoints = which === 'eye' ? results.eyeRef : results.photoRef
   const product = which === 'eye' ? results.oledEyePoints : results.oledPhotoPoints
-  const refLabel = which === 'eye' ? 'око' : 'фотодіод'
+  const refLabel = which === 'eye' ? 'eye' : 'photodiode'
 
   return {
     grid: gridFor(1),
     legend: legend(),
-    xAxis: xAxis('довжина хвилі, нм'),
-    yAxis: yAxis('інтенсивність, у.о.'),
+    xAxis: xAxis('wavelength, nm'),
+    yAxis: yAxis('intensity, a.u.'),
     series: [
-      line('Інтенсивність (OLED)', '#374151', toPoints(results.oledPoints)),
+      line('Intensity (OLED)', '#374151', toPoints(results.oledPoints)),
       line(refLabel, '#f9a8d4', toGappedPoints(refPoints)),
-      line(`Інтенсивність (OLED × ${refLabel})`, '#ef4444', toPoints(product)),
+      line(`Intensity (OLED × ${refLabel})`, '#ef4444', toPoints(product)),
     ],
   }
 }
@@ -132,16 +132,16 @@ export function efficiencyOption(rows: IvComputedRow[]): EChartsOption {
   return {
     grid: { left: 62, right: 108, top: 58, bottom: 46 },
     legend: legend(),
-    xAxis: xAxis('густина струму, мА/см²'),
+    xAxis: xAxis('current density, mA/cm²'),
     yAxis: [
-      seriesAxis('кд/А', '#374151'),
-      seriesAxis('лм/Вт', '#ef4444', { position: 'right', nameGap: 30, splitLine: { show: false } }),
+      seriesAxis('cd/A', '#374151'),
+      seriesAxis('lm/W', '#ef4444', { position: 'right', nameGap: 30, splitLine: { show: false } }),
       seriesAxis('%', '#2563eb', { position: 'right', offset: 52, nameGap: 30, splitLine: { show: false } }),
     ],
     series: [
-      line('струмова ефективність, кд/А', '#374151', at(r => r.e), { yAxisIndex: 0 }),
-      line('енергетична ефективність, лм/Вт', '#ef4444', at(r => r.f), { yAxisIndex: 1 }),
-      line('зовнішня квантова ефективність, %', '#2563eb', at(r => r.g), { yAxisIndex: 2 }),
+      line('current efficiency, cd/A', '#374151', at(r => r.e), { yAxisIndex: 0 }),
+      line('power efficiency, lm/W', '#ef4444', at(r => r.f), { yAxisIndex: 1 }),
+      line('external quantum efficiency, %', '#2563eb', at(r => r.g), { yAxisIndex: 2 }),
     ],
   }
 }
@@ -153,19 +153,19 @@ export function sweepOption(rows: IvComputedRow[], shared = true): EChartsOption
   const base = {
     grid: { left: 68, right: 68, top: 42, bottom: 46 },
     legend: legend(),
-    xAxis: xAxis('напруга, В'),
+    xAxis: xAxis('voltage, V'),
   }
 
   if (!shared) {
     return {
       ...base,
       yAxis: [
-        seriesAxis('густина струму, мА/см²', '#374151'),
-        seriesAxis('яскравість, кд/м²', '#ef4444', { position: 'right', nameGap: 52, splitLine: { show: false } }),
+        seriesAxis('current density, mA/cm²', '#374151'),
+        seriesAxis('luminance, cd/m²', '#ef4444', { position: 'right', nameGap: 52, splitLine: { show: false } }),
       ],
       series: [
-        line('густина струму, мА/см²', '#374151', current, { yAxisIndex: 0 }),
-        line('яскравість, кд/м²', '#ef4444', luminance, { yAxisIndex: 1 }),
+        line('current density, mA/cm²', '#374151', current, { yAxisIndex: 0 }),
+        line('luminance, cd/m²', '#ef4444', luminance, { yAxisIndex: 1 }),
       ],
     }
   }
@@ -179,12 +179,12 @@ export function sweepOption(rows: IvComputedRow[], shared = true): EChartsOption
   return {
     ...base,
     yAxis: [
-      yAxis('густина струму, мА/см² · яскравість, кд/м²', sharedRange),
+      yAxis('current density, mA/cm² · luminance, cd/m²', sharedRange),
       yAxis('', { ...sharedRange, position: 'right', splitLine: { show: false } }),
     ],
     series: [
-      line('густина струму, мА/см²', '#374151', current, { yAxisIndex: 0 }),
-      line('яскравість, кд/м²', '#ef4444', luminance, { yAxisIndex: 0 }),
+      line('current density, mA/cm²', '#374151', current, { yAxisIndex: 0 }),
+      line('luminance, cd/m²', '#ef4444', luminance, { yAxisIndex: 0 }),
     ],
   }
 }
