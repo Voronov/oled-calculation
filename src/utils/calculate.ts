@@ -52,7 +52,7 @@ function multiplyWithRef(oled: XYPoint[], ref: XYPoint[]): XYPoint[] {
   return oled.map(pt => ({ x: pt.x, y: pt.y * interp(ref, pt.x) }))
 }
 
-export const DEFAULT_LV_PARAMS: LvParams = { a: 1.72, b: 0.000006, c: 33.64 }
+export const DEFAULT_LV_PARAMS: LvParams = { a: 1.72, b: 0.000004, c: 33.64 }
 
 export function computeLv(Kr: number, FF: number, p: LvParams = DEFAULT_LV_PARAMS): number {
   return Kr * ((p.a * 0.01 * 0.01) / (p.b * p.c * 0.0000001 * FF))
