@@ -117,8 +117,9 @@ export function buildReportHtml(input: ReportInput): string {
       ['Сирий діапазон цієї колонки', `мін ${stats.min} · макс ${stats.max}`],
       ['Нормування', 'мін-макс до [0, 1] по колонці'],
       ['Пік випромінювання λ', `${ivParams.lambdaNm} нм`],
-      ['Площа зразка S', `${ivParams.area} см²`],
-      ['Коефіцієнт фотодіода k', String(ivParams.photoFactor)],
+      ...(ivFileName
+        ? [['Площа зразка S', `${ivParams.area} см²`], ['Коефіцієнт фотодіода k', String(ivParams.photoFactor)]]
+        : []),
       ['Множники Lv', `a = ${lvParams.a} · b = ${lvParams.b} · c = ${lvParams.c}`],
     ],
   )
@@ -176,69 +177,81 @@ export function buildReportHtml(input: ReportInput): string {
     ),
   ].join('')
 
-  const eqeConstant = (3.14 * 1.6e-19 * ivParams.lambdaNm * 1e-9 * 100) / (Kr * 6.0e-34 * 3e8)
+  let ivHtml = ''
+  if (ivBlocks.length > 0) {
+    const eqeConstant = (3.14 * 1.6e-19 * ivParams.lambdaNm * 1e-9 * 100) / (Kr * 6.0e-34 * 3e8)
 
-  const columnDerivations = [
-    derivation(TEX.A, 'напруга розгортки з документа, без змін', '', ' В'),
-    derivation(TEX.B, `S = ${ivParams.area} см²`, '', ' мА/см²'),
-    derivation(
-      TEX.C,
-      `k = ${ivParams.photoFactor}, Lv = ${Lv.toExponential(4)}, далі мінус базова лінія C₀, від'ємні очищаються`,
-      '',
-      ' кд/м²',
-    ),
-    derivation(TEX.D, 'копія колонки густини струму', ''),
-    derivation(TEX.E, 'яскравість поділена на густину струму', '', ' кд/А'),
-    derivation(TEX.F, 'струмова ефективність × π, поділена на напругу', '', ' лм/Вт'),
-    derivation(
-      TEX.G,
-      `λ = ${ivParams.lambdaNm} нм, Kr = ${fmt(Kr)} ⇒ G = E × ${eqeConstant.toExponential(4)}`,
-      '',
-      ' %',
-    ),
-  ].join('')
+    const columnDerivations = [
+      derivation(TEX.A, 'напруга розгортки з документа, без змін', '', ' В'),
+      derivation(TEX.B, `S = ${ivParams.area} см²`, '', ' мА/см²'),
+      derivation(
+        TEX.C,
+        `k = ${ivParams.photoFactor}, Lv = ${Lv.toExponential(4)}, далі мінус базова лінія C₀, від'ємні очищаються`,
+        '',
+        ' кд/м²',
+      ),
+      derivation(TEX.D, 'копія колонки густини струму', ''),
+      derivation(TEX.E, 'яскравість поділена на густину струму', '', ' кд/А'),
+      derivation(TEX.F, 'струмова ефективність × π, поділена на напругу', '', ' лм/Вт'),
+      derivation(
+        TEX.G,
+        `λ = ${ivParams.lambdaNm} нм, Kr = ${fmt(Kr)} ⇒ G = E × ${eqeConstant.toExponential(4)}`,
+        '',
+        ' %',
+      ),
+    ].join('')
 
-  const { rows: sampleRows, baseline } = computeIvBlock(ivBlocks[0], Kr, Lv, ivParams, ivBaselines[ivBlocks[0].index])
-  const sample = sampleRows.reduce((best, r) => ((r.c ?? -Infinity) > (best.c ?? -Infinity) ? r : best), sampleRows[0])
-  const sampleSource = ivBlocks[0].rows[sampleRows.indexOf(sample)]
+    const { rows: sampleRows, baseline } = computeIvBlock(ivBlocks[0], Kr, Lv, ivParams, ivBaselines[ivBlocks[0].index])
+    const sample = sampleRows.reduce((best, r) => ((r.c ?? -Infinity) > (best.c ?? -Infinity) ? r : best), sampleRows[0])
+    const sampleSource = ivBlocks[0].rows[sampleRows.indexOf(sample)]
 
-  const workedExample = [
-    derivation(TEX.A, `= ${sampleSource.text[0]}`, fmt(sample.a), ' В'),
-    derivation(TEX.B, `= ${sampleSource.text[1]} × 1000 / ${ivParams.area}`, fmt(sample.b), ' мА/см²'),
-    derivation(
-      TEX.C,
-      `= ${sampleSource.text[2]} × ${ivParams.photoFactor} × ${Lv.toExponential(4)} − ${fmt(baseline)}`,
-      fmt(sample.c),
-      ' кд/м²',
-    ),
-    derivation(TEX.D, `= ${fmt(sample.b)}`, fmt(sample.d), ' мА/см²'),
-    derivation(TEX.E, `= (${fmt(sample.c)} / ${fmt(sample.d)}) × 0,1`, fmt(sample.e), ' кд/А'),
-    derivation(TEX.F, `= (${fmt(sample.e)} × 3,14) / ${fmt(sample.a)}`, fmt(sample.f), ' лм/Вт'),
-    derivation(TEX.G, `= ${fmt(sample.e)} × ${eqeConstant.toExponential(4)}`, fmt(sample.g), ' %'),
-  ].join('')
+    const workedExample = [
+      derivation(TEX.A, `= ${sampleSource.text[0]}`, fmt(sample.a), ' В'),
+      derivation(TEX.B, `= ${sampleSource.text[1]} × 1000 / ${ivParams.area}`, fmt(sample.b), ' мА/см²'),
+      derivation(
+        TEX.C,
+        `= ${sampleSource.text[2]} × ${ivParams.photoFactor} × ${Lv.toExponential(4)} − ${fmt(baseline)}`,
+        fmt(sample.c),
+        ' кд/м²',
+      ),
+      derivation(TEX.D, `= ${fmt(sample.b)}`, fmt(sample.d), ' мА/см²'),
+      derivation(TEX.E, `= (${fmt(sample.c)} / ${fmt(sample.d)}) × 0,1`, fmt(sample.e), ' кд/А'),
+      derivation(TEX.F, `= (${fmt(sample.e)} × 3,14) / ${fmt(sample.a)}`, fmt(sample.f), ' лм/Вт'),
+      derivation(TEX.G, `= ${fmt(sample.e)} × ${eqeConstant.toExponential(4)}`, fmt(sample.g), ' %'),
+    ].join('')
 
-  const caseSections = ivBlocks.map(block => {
-    const { rows, baseline: caseBaseline, turnOnIndex } = computeIvBlock(block, Kr, Lv, ivParams, ivBaselines[block.index])
-    const s = summarize(rows)
-    const efficiency = renderToDataUrl(efficiencyOption(rows), 760, 380)
-    const sweep = renderToDataUrl(sweepOption(rows), 760, 380)
+    const caseSections = ivBlocks.map(block => {
+      const { rows, baseline: caseBaseline, turnOnIndex } = computeIvBlock(block, Kr, Lv, ivParams, ivBaselines[block.index])
+      const s = summarize(rows)
+      const efficiency = renderToDataUrl(efficiencyOption(rows), 760, 380)
+      const sweep = renderToDataUrl(sweepOption(rows), 760, 380)
 
-    return `
-      <section class="case">
-        <h3>Вимір ${block.index}</h3>
-        <p class="note">відкривання при ${fmt(block.rows[turnOnIndex]?.v ?? null)} В · базова лінія колонки C ${fmt(caseBaseline)} кд/м²${ivBaselines[block.index] !== undefined ? ' (вписано вручну)' : ' (авто)'}</p>
-        ${table(
-          ['макс J, мА/см²', 'макс L, кд/м²', 'макс CE, кд/А', 'макс PE, лм/Вт', 'макс EQE, %'],
-          [[fmt(s.maxJ), fmt(s.maxL), fmt(s.maxCE), fmt(s.maxPE), fmt(s.maxEQE)]],
-          false,
-        )}
-        <div class="figures">${figure(`Вимір ${block.index} — ефективність від густини струму`, efficiency)}${figure(`Вимір ${block.index} — густина струму та яскравість від напруги`, sweep)}</div>
-        <details>
-          <summary>Розраховані колонки A–G (${rows.length} точок)</summary>
-          ${table(IV_COLUMNS.map(c => c.head), rows.map(r => IV_COLUMNS.map(c => fmt(r[c.key]))), false)}
-        </details>
-      </section>`
-  }).join('')
+      return `
+        <section class="case">
+          <h3>Вимір ${block.index}</h3>
+          <p class="note">відкривання при ${fmt(block.rows[turnOnIndex]?.v ?? null)} В · базова лінія колонки C ${fmt(caseBaseline)} кд/м²${ivBaselines[block.index] !== undefined ? ' (вписано вручну)' : ' (авто)'}</p>
+          ${table(
+            ['макс J, мА/см²', 'макс L, кд/м²', 'макс CE, кд/А', 'макс PE, лм/Вт', 'макс EQE, %'],
+            [[fmt(s.maxJ), fmt(s.maxL), fmt(s.maxCE), fmt(s.maxPE), fmt(s.maxEQE)]],
+            false,
+          )}
+          <div class="figures">${figure(`Вимір ${block.index} — ефективність від густини струму`, efficiency)}${figure(`Вимір ${block.index} — густина струму та яскравість від напруги`, sweep)}</div>
+          <details>
+            <summary>Розраховані колонки A–G (${rows.length} точок)</summary>
+            ${table(IV_COLUMNS.map(c => c.head), rows.map(r => IV_COLUMNS.map(c => fmt(r[c.key]))), false)}
+          </details>
+        </section>`
+    }).join('')
+
+    ivHtml = `
+<h2><span class="num">5</span>Як будуються колонки ВАХ</h2>
+${columnDerivations}
+<h3>Приклад на рядку виміру ${ivBlocks[0].index} при ${fmt(sample.a)} В</h3>
+${workedExample}
+
+<h2><span class="num">6</span>Результати по вимірах</h2>
+${caseSections}`
+  }
 
   return `<!doctype html>
 <html lang="uk">
@@ -298,7 +311,7 @@ export function buildReportHtml(input: ReportInput): string {
 </style>
 </head>
 <body>
-<h1>Звіт: спектральний аналіз і ВАХ OLED</h1>
+<h1>Звіт: спектральний аналіз${ivFileName ? ' і ВАХ' : ''} OLED</h1>
 <p class="meta">сформовано ${escapeHtml(generated)}</p>
 
 <h2><span class="num">1</span>Що завантажено</h2>
@@ -316,13 +329,7 @@ ${spectralDerivations}
 ${colourDerivations}
 <div class="figures">${figure('Діаграма колірності CIE 1931 (x, y)', cie1931)}${figure('Діаграма колірності CIE 1976 UCS (u′, v′)', cie1976)}</div>
 
-<h2><span class="num">5</span>Як будуються колонки ВАХ</h2>
-${columnDerivations}
-<h3>Приклад на рядку виміру ${ivBlocks[0].index} при ${fmt(sample.a)} В</h3>
-${workedExample}
-
-<h2><span class="num">6</span>Результати по вимірах</h2>
-${caseSections}
+${ivHtml}
 </body>
 </html>`
 }

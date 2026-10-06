@@ -22,7 +22,7 @@ const Step3Report: FC = () => {
   const [saving, setSaving] = useState(false)
 
   const ready = Boolean(
-    parsedData && normalizedData && calcResults && ivData && selectedConditionIndex !== null,
+    parsedData && normalizedData && calcResults && selectedConditionIndex !== null,
   )
 
   const collect = useCallback((): ReportInput => {
@@ -35,7 +35,7 @@ const Step3Report: FC = () => {
 
     return {
       parsed: parsedData!,
-      ivFileName: ivData!.fileName,
+      ivFileName: ivData?.fileName ?? null,
       normalized: normalizedData!,
       conditionLabels: normalizedData!.conditions.map((_, i) =>
         conditionLabel(normalizedData!.conditions, i)),
@@ -43,7 +43,7 @@ const Step3Report: FC = () => {
       results: calcResults!,
       lvParams,
       Lv,
-      ivBlocks: ivData!.blocks,
+      ivBlocks: ivData?.blocks ?? [],
       ivParams: resolved,
       ivBaselines,
     }
@@ -70,7 +70,7 @@ const Step3Report: FC = () => {
   if (!ready) {
     return (
       <div className="report-empty">
-        Звіт збереться, коли будуть готові обидва файли й вибраний набір на кроці 2.
+        Звіт збереться, коли буде вибраний набір на кроці 2.
         <button className="btn btn--ghost" onClick={() => dispatch({ type: 'SET_STEP', payload: 2 })}>
           ← До розрахунку
         </button>
@@ -87,7 +87,7 @@ const Step3Report: FC = () => {
           <span className="report__badge">Звіт</span>
           <span className="report__desc">
             Що завантажено &rarr; що вибрано &rarr; формули з підставленими числами &rarr;
-            колориметрія &rarr; результати по {ivData!.blocks.length} вимірах
+            колориметрія{ivData && <> &rarr; результати по {ivData.blocks.length} вимірах</>}
           </span>
         </div>
         <button
@@ -110,7 +110,7 @@ const Step3Report: FC = () => {
 
       <div className="report__summary">
         <Fact label="Спектри" value={parsedData!.fileName} />
-        <Fact label="ВАХ" value={ivData!.fileName} />
+        {ivData && <Fact label="ВАХ" value={ivData.fileName} />}
         <Fact label="Набір" value={conditionLabel(normalizedData!.conditions, selectedConditionIndex!)} />
         <Fact label="Kr" value={`${calcResults!.Kr.toFixed(4)} лм/Вт`} />
         <Fact label="FF" value={calcResults!.FF.toFixed(4)} />
