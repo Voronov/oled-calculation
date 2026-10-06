@@ -73,6 +73,14 @@ const Step1Upload: FC = () => {
           onNext={() => dispatch({ type: 'SET_STEP', payload: 2 })}
         />
       )}
+
+      {!parsedData && ivData && (
+        <div className="preview__actions">
+          <button className="btn btn--primary" onClick={() => dispatch({ type: 'SET_STEP', payload: 2 })}>
+            Далі →
+          </button>
+        </div>
+      )}
     </div>
   )
 }

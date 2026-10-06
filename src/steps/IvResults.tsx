@@ -1,7 +1,7 @@
 import { useState, useMemo, type FC } from 'react'
 import { useApp } from '../context/AppContext'
 import Chart from '../components/Chart'
-import { efficiencyOption, sweepOption } from '../charts/options'
+import { currentOption, efficiencyOption, sweepOption } from '../charts/options'
 import { computeLv } from '../utils/calculate'
 import { computeIvBlock, peakInfo, DEFAULT_IV_PARAMS, type ResolvedIvParams, type PeakInfo } from '../utils/ivCalc'
 import type { IvBlock, IvComputedRow, IvParams } from '../types'
@@ -29,9 +29,8 @@ const IvResults: FC = () => {
     [normalizedData, selectedConditionIndex],
   )
 
-  if (!calcResults) return null
-
   if (!ivData) {
+    if (!calcResults) return null
     return (
       <div className="iv-empty">
         Документ ВАХ не завантажено — додайте файл .docx на кроці 1.
@@ -42,8 +41,9 @@ const IvResults: FC = () => {
     )
   }
 
-  const Kr = calcResults.Kr
-  const Lv = computeLv(Kr, calcResults.FF, lvParams)
+  // without a spectrum only voltage and current density can be computed
+  const Kr = calcResults?.Kr ?? null
+  const Lv = calcResults ? computeLv(calcResults.Kr, calcResults.FF, lvParams) : null
   const lambdaNm = ivParams.lambdaNm ?? peak?.lambdaNm ?? 0
   const resolved: ResolvedIvParams = { ...ivParams, lambdaNm }
 
@@ -55,13 +55,16 @@ const IvResults: FC = () => {
         <span className="iv__badge">Результати ВАХ</span>
         <span className="iv__file">⚡ {ivData.fileName}</span>
         <span className="iv__meta">
-          Kr = {Kr.toFixed(4)} лм/Вт · Lv = {Lv.toExponential(4)} кд/м²
+          {Kr !== null && Lv !== null
+            ? `Kr = ${Kr.toFixed(4)} лм/Вт · Lv = ${Lv.toExponential(4)} кд/м²`
+            : 'без спектра — лише напруга і густина струму'}
         </span>
       </div>
 
       <IvParamsPanel
         params={ivParams}
         peak={peak}
+        spectral={Kr !== null}
         onChange={p => dispatch({ type: 'SET_IV_PARAMS', payload: p })}
       />
 
@@ -137,10 +140,11 @@ const ParamInput: FC<{ value: number; onChange: (v: number) => void }> = ({ valu
 interface IvParamsPanelProps {
   params: IvParams
   peak: PeakInfo | null
+  spectral: boolean
   onChange: (p: IvParams) => void
 }
 
-const IvParamsPanel: FC<IvParamsPanelProps> = ({ params, peak, onChange }) => {
+const IvParamsPanel: FC<IvParamsPanelProps> = ({ params, peak, spectral, onChange }) => {
   const followingPeak = params.lambdaNm === null
   const isDefault = params.area === DEFAULT_IV_PARAMS.area
     && params.photoFactor === DEFAULT_IV_PARAMS.photoFactor
@@ -155,6 +159,7 @@ const IvParamsPanel: FC<IvParamsPanelProps> = ({ params, peak, onChange }) => {
         <span className="iv-param__unit">см²</span>
       </span>
 
+      {spectral && (<>
       <span className="iv-param__group">
         <Formula tex={TEX.C} />
         <span className="iv-param__label">k =</span>
@@ -177,6 +182,7 @@ const IvParamsPanel: FC<IvParamsPanelProps> = ({ params, peak, onChange }) => {
           </span>
         )}
       </span>
+      </>)}
 
       <button
         className="iv-param__reset"
@@ -224,8 +230,8 @@ const COLUMNS: Array<{ key: keyof IvComputedRow; head: string; tex: string; sub:
 
 interface ComputedViewProps {
   block: IvBlock
-  Kr: number
-  Lv: number
+  Kr: number | null
+  Lv: number | null
   params: ResolvedIvParams
   baselineOverride: number | undefined
   onBaseline: (baseline: number | null) => void
@@ -233,13 +239,34 @@ interface ComputedViewProps {
 
 const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOverride, onBaseline }) => {
   const { rows, baseline, turnOnIndex } = useMemo(
-    () => computeIvBlock(block, Kr, Lv, params, baselineOverride),
+    () => (Kr !== null && Lv !== null
+      ? computeIvBlock(block, Kr, Lv, params, baselineOverride)
+      : { rows: currentOnlyRows(block, params.area), baseline: 0, turnOnIndex: 0 }),
     [block, Kr, Lv, params, baselineOverride],
   )
 
   const [sharedScale, setSharedScale] = useState(true)
   const efficiency = useMemo(() => efficiencyOption(rows), [rows])
   const sweep = useMemo(() => sweepOption(rows, sharedScale), [rows, sharedScale])
+  const current = useMemo(() => currentOption(rows), [rows])
+  const columns = Kr === null ? COLUMNS.filter(c => c.key === 'a' || c.key === 'b') : COLUMNS
+
+  if (Kr === null) {
+    return (
+      <>
+        <div className="iv-charts">
+          <Chart
+            title="Густина струму від напруги"
+            option={current}
+            exportName={`case-${block.index}-current`}
+            logToggle
+            defaultPoints
+          />
+        </div>
+        <ComputedTable rows={rows} columns={columns} />
+      </>
+    )
+  }
 
   return (
     <>
@@ -283,31 +310,42 @@ const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOv
         />
       </div>
 
-      <div className="iv-table-wrap">
-        <table className="iv-table">
-          <thead>
-            <tr>
-              {COLUMNS.map(c => <th key={c.head} title={c.sub}><Formula tex={c.tex} /></th>)}
-            </tr>
-            <tr>
-              {COLUMNS.map(c => <th key={c.head} className="iv-table__sub">{c.sub}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr key={i} className={i % 2 ? 'iv-table__tr--alt' : ''}>
-                {COLUMNS.map(c => (
-                  <td key={c.head} className={row[c.key] === null ? 'iv-table__td--empty' : ''}>
-                    {fmt(row[c.key])}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ComputedTable rows={rows} columns={columns} />
     </>
   )
 }
+
+function currentOnlyRows(block: IvBlock, area: number): IvComputedRow[] {
+  return block.rows.map(row => {
+    const b = (row.i1 * 1000) / area
+    return { a: row.v, b, c: null, d: b, e: null, f: null, g: null }
+  })
+}
+
+const ComputedTable: FC<{ rows: IvComputedRow[]; columns: typeof COLUMNS }> = ({ rows, columns }) => (
+  <div className="iv-table-wrap">
+    <table className="iv-table">
+      <thead>
+        <tr>
+          {columns.map(c => <th key={c.head} title={c.sub}><Formula tex={c.tex} /></th>)}
+        </tr>
+        <tr>
+          {columns.map(c => <th key={c.head} className="iv-table__sub">{c.sub}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, i) => (
+          <tr key={i} className={i % 2 ? 'iv-table__tr--alt' : ''}>
+            {columns.map(c => (
+              <td key={c.head} className={row[c.key] === null ? 'iv-table__td--empty' : ''}>
+                {fmt(row[c.key])}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)
 
 export default IvResults

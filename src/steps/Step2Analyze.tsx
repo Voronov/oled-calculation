@@ -17,7 +17,7 @@ function conditionLabel(conditions: number[], index: number): string {
 
 const Step2Analyze: FC = () => {
   const { state, dispatch } = useApp()
-  const { parsedData, normalizedData, selectedConditionIndex } = state
+  const { parsedData, normalizedData, selectedConditionIndex, ivData } = state
 
   useEffect(() => {
     if (parsedData && !normalizedData) {
@@ -44,6 +44,19 @@ const Step2Analyze: FC = () => {
     () => (normalizedData ? spectraOption(normalizedData, labels, selectedConditionIndex) : null),
     [normalizedData, labels, selectedConditionIndex],
   )
+
+  if (!parsedData && ivData) {
+    return (
+      <div className="norm">
+        <IvResults />
+        <div className="norm__actions">
+          <button className="btn btn--ghost" onClick={() => dispatch({ type: 'SET_STEP', payload: 1 })}>
+            ← Назад
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (!parsedData || !normalizedData || !option) {
     return <div className="norm-loading">Обчислення нормування…</div>

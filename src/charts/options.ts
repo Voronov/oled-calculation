@@ -146,6 +146,16 @@ export function efficiencyOption(rows: IvComputedRow[]): EChartsOption {
   }
 }
 
+export function currentOption(rows: IvComputedRow[]): EChartsOption {
+  return {
+    grid: { left: 68, right: 18, top: 42, bottom: 46 },
+    legend: legend(),
+    xAxis: xAxis('voltage, V'),
+    yAxis: yAxis('current density, mA/cm²'),
+    series: [line('current density, mA/cm²', '#374151', rows.map(r => [r.a, r.b] as Point))],
+  }
+}
+
 export function sweepOption(rows: IvComputedRow[], shared = true): EChartsOption {
   const current = rows.map(r => [r.a, r.b] as Point)
   const luminance = rows.map(r => [r.a, r.c] as Point)
