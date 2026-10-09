@@ -66,16 +66,18 @@ export function applyView(option: EChartsOption, { log, showPoints }: ViewState)
   return {
     ...option,
     yAxis: yAxes.map(axis => {
-      const next: Record<string, unknown> = { ...(axis as object), type: log ? 'log' : 'value' }
+      const own = axis as Record<string, unknown>
+      // an axis declared log stays log regardless of the toggle
+      const next: Record<string, unknown> = { ...own, type: log || own.type === 'log' ? 'log' : 'value' }
       // a log axis cannot start at zero
       if (log) { delete next.min; delete next.max }
       return next
     }),
     series: series.map(s => ({
-      ...(s as object),
-      showSymbol: showPoints,
       symbol: 'circle',
       symbolSize: 4,
+      ...(s as object),
+      showSymbol: showPoints,
     })),
   } as EChartsOption
 }

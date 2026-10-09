@@ -156,45 +156,22 @@ export function currentOption(rows: IvComputedRow[]): EChartsOption {
   }
 }
 
-export function sweepOption(rows: IvComputedRow[], shared = true): EChartsOption {
-  const current = rows.map(r => [r.a, r.b] as Point)
-  const luminance = rows.map(r => [r.a, r.c] as Point)
+export function sweepOption(rows: IvComputedRow[]): EChartsOption {
+  const square = { showSymbol: true, symbol: 'rect', symbolSize: 6, lineStyle: { width: 1 } }
 
-  const base = {
-    grid: { left: 68, right: 68, top: 42, bottom: 46 },
-    legend: legend(),
-    xAxis: xAxis('voltage, V'),
-  }
-
-  if (!shared) {
-    return {
-      ...base,
-      yAxis: [
-        seriesAxis('current density, mA/cm²', '#374151'),
-        seriesAxis('luminance, cd/m²', '#ef4444', { position: 'right', nameGap: 52, splitLine: { show: false } }),
-      ],
-      series: [
-        line('current density, mA/cm²', '#374151', current, { yAxisIndex: 0 }),
-        line('luminance, cd/m²', '#ef4444', luminance, { yAxisIndex: 1 }),
-      ],
-    }
-  }
-
-  const values = [...current, ...luminance]
-    .map(p => p[1])
-    .filter((v): v is number => v !== null && isFinite(v))
-  const max = values.length ? Math.max(...values) : 1
-
-  const sharedRange = { min: 0, max, splitNumber: 9 }
   return {
-    ...base,
+    grid: { left: 68, right: 78, top: 42, bottom: 46 },
+    legend: { ...legend(), top: 2, left: undefined, right: 78, width: undefined, orient: 'vertical' },
+    xAxis: xAxis('Voltage, V'),
     yAxis: [
-      yAxis('current density, mA/cm² · luminance, cd/m²', sharedRange),
-      yAxis('', { ...sharedRange, position: 'right', splitLine: { show: false } }),
+      yAxis('current density, mA/cm²', { min: 0, splitLine: { show: false } }),
+      seriesAxis('brightness, cd/m²', '#ef4444', {
+        type: 'log', position: 'right', nameGap: 56, splitLine: { show: false },
+      }),
     ],
     series: [
-      line('current density, mA/cm²', '#374151', current, { yAxisIndex: 0 }),
-      line('luminance, cd/m²', '#ef4444', luminance, { yAxisIndex: 0 }),
+      line('mA/cm²', '#374151', rows.map(r => [r.a, r.b] as Point), { yAxisIndex: 0, ...square }),
+      line('cd/m²', '#ef4444', rows.map(r => [r.a, positive(r.c)] as Point), { yAxisIndex: 1, ...square }),
     ],
   }
 }

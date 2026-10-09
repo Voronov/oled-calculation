@@ -245,9 +245,8 @@ const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOv
     [block, Kr, Lv, params, baselineOverride],
   )
 
-  const [sharedScale, setSharedScale] = useState(true)
   const efficiency = useMemo(() => efficiencyOption(rows), [rows])
-  const sweep = useMemo(() => sweepOption(rows, sharedScale), [rows, sharedScale])
+  const sweep = useMemo(() => sweepOption(rows), [rows])
   const current = useMemo(() => currentOption(rows), [rows])
   const columns = Kr === null ? COLUMNS.filter(c => c.key === 'a' || c.key === 'b') : COLUMNS
 
@@ -296,17 +295,7 @@ const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOv
           title="Густина струму та яскравість від напруги"
           option={sweep}
           exportName={`case-${block.index}-sweep`}
-          logToggle
           defaultPoints
-          extraSwitches={
-            <button
-              className={`chart__switch${sharedScale ? ' chart__switch--on' : ''}`}
-              onClick={() => setSharedScale(v => !v)}
-              title="Спільна шкала для обох кривих або окрема вісь для кожної"
-            >
-              {sharedScale ? 'спільна' : 'окремі'}
-            </button>
-          }
         />
       </div>
 
