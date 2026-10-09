@@ -161,7 +161,7 @@ export function sweepOption(rows: IvComputedRow[]): EChartsOption {
 
   return {
     grid: { left: 68, right: 78, top: 42, bottom: 46 },
-    legend: { ...legend(), top: 2, left: undefined, right: 78, width: undefined, orient: 'vertical' },
+    legend: { ...legend(), top: 2, left: undefined, right: 120, width: undefined, orient: 'vertical' },
     xAxis: xAxis('Voltage, V'),
     yAxis: [
       yAxis('current density, mA/cm²', { min: 0, splitLine: { show: false } }),
