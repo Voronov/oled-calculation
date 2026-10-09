@@ -3,7 +3,7 @@ import type { IvBlock, IvComputedRow, IvParams, NormalizedData } from '../types'
 export type ResolvedIvParams = Omit<IvParams, 'lambdaNm'> & { lambdaNm: number }
 
 export const DEFAULT_IV_PARAMS: IvParams = {
-  area: 6e-2,
+  area: 4e-2,
   photoFactor: -0.4,
   lambdaNm: null,
 }
