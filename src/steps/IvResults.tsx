@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import Chart from '../components/Chart'
 import { currentOption, efficiencyOption, sweepOption } from '../charts/options'
 import { computeLv } from '../utils/calculate'
-import { autoBrightnessFrom, computeIvBlock, peakInfo, DEFAULT_IV_PARAMS, type ResolvedIvParams, type PeakInfo } from '../utils/ivCalc'
+import { autoBrightnessFrom, autoPhotocurrentFrom, computeIvBlock, peakInfo, DEFAULT_IV_PARAMS, type ResolvedIvParams, type PeakInfo } from '../utils/ivCalc'
 import type { IvBlock, IvComputedRow, IvParams } from '../types'
 import Formula from '../components/Formula'
 import { TEX } from '../charts/tex'
@@ -252,14 +252,40 @@ const ComputedView: FC<ComputedViewProps> = ({
   )
 
   const efficiency = useMemo(() => efficiencyOption(rows), [rows])
-  const brightnessFrom = brightnessFromOverride ?? autoBrightnessFrom(rows)
+  const brightnessFrom = brightnessFromOverride ?? (Kr === null ? autoPhotocurrentFrom(block) : autoBrightnessFrom(rows))
   const sweep = useMemo(() => sweepOption(rows, brightnessFrom), [rows, brightnessFrom])
-  const current = useMemo(() => currentOption(rows, block.rows.map(r => r.i2)), [rows, block])
+  const current = useMemo(
+    () => currentOption(rows, block.rows.map(r => r.i2), brightnessFrom),
+    [rows, block, brightnessFrom],
+  )
   const columns = Kr === null ? COLUMNS.filter(c => c.key === 'a' || c.key === 'b') : COLUMNS
+
+  const cutoff = (
+    <div className="iv-baseline">
+      <span className="iv-param__label">{Kr === null ? 'Струм фотодіода' : 'Яскравість'} на графіку від</span>
+      <ParamInput value={brightnessFrom ?? 0} onChange={onBrightnessFrom} />
+      <span className="iv-param__unit">В</span>
+      <span className="iv-param__note">
+        {brightnessFromOverride !== undefined
+          ? 'вписано вручну'
+          : Kr === null
+            ? 'авто — з першої точки, після якої |I2| ≥ 3× темнового струму'
+            : 'авто — з першої точки, після якої яскравість ≥ 1 кд/м²'}
+      </span>
+      <button
+        className="iv-param__reset"
+        disabled={brightnessFromOverride === undefined}
+        onClick={() => onBrightnessFrom(null)}
+      >
+        Авто
+      </button>
+    </div>
+  )
 
   if (Kr === null) {
     return (
       <>
+        {cutoff}
         <div className="iv-charts">
           <Chart
             title="Густина струму та струм фотодіода від напруги"
@@ -289,21 +315,7 @@ const ComputedView: FC<ComputedViewProps> = ({
         )}
       </div>
 
-      <div className="iv-baseline">
-        <span className="iv-param__label">Яскравість на графіку від</span>
-        <ParamInput value={brightnessFrom ?? 0} onChange={onBrightnessFrom} />
-        <span className="iv-param__unit">В</span>
-        <span className="iv-param__note">
-          {brightnessFromOverride === undefined ? 'авто — з першої точки, після якої яскравість ≥ 1 кд/м²' : 'вписано вручну'}
-        </span>
-        <button
-          className="iv-param__reset"
-          disabled={brightnessFromOverride === undefined}
-          onClick={() => onBrightnessFrom(null)}
-        >
-          Авто
-        </button>
-      </div>
+      {cutoff}
 
       <div className="iv-charts">
         <Chart

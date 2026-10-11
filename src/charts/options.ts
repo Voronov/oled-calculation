@@ -146,7 +146,7 @@ export function efficiencyOption(rows: IvComputedRow[]): EChartsOption {
   }
 }
 
-export function currentOption(rows: IvComputedRow[], photocurrent: number[]): EChartsOption {
+export function currentOption(rows: IvComputedRow[], photocurrent: number[], from: number | null): EChartsOption {
   const square = { showSymbol: true, symbol: 'rect', symbolSize: 6, lineStyle: { width: 1 } }
 
   return {
@@ -161,7 +161,7 @@ export function currentOption(rows: IvComputedRow[], photocurrent: number[]): EC
     ],
     series: [
       line('mA/cm²', '#374151', rows.map(r => [r.a, r.b] as Point), { yAxisIndex: 0, ...square }),
-      line('|I2|, A', '#ef4444', rows.map((r, i) => [r.a, positive(Math.abs(photocurrent[i]))] as Point), { yAxisIndex: 1, ...square }),
+      line('|I2|, A', '#ef4444', rows.map((r, i) => [r.a, from !== null && r.a < from ? null : positive(Math.abs(photocurrent[i]))] as Point), { yAxisIndex: 1, ...square }),
     ],
   }
 }

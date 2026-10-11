@@ -74,6 +74,18 @@ export function autoBrightnessFrom(rows: IvComputedRow[]): number | null {
   return rows[0]?.a ?? null
 }
 
+const DARK_MULTIPLE = 3
+
+// voltage from which |I2| stays at least 3× above the lowest (dark) reading
+export function autoPhotocurrentFrom(block: IvBlock): number | null {
+  const abs = block.rows.map(r => Math.abs(r.i2))
+  const floor = Math.min(...abs.filter(v => v > 0)) * DARK_MULTIPLE
+  for (let i = abs.length - 1; i >= 0; i--) {
+    if (abs[i] < floor) return block.rows[i + 1]?.v ?? null
+  }
+  return block.rows[0]?.v ?? null
+}
+
 export function luminanceRawOf(block: IvBlock, Lv: number, params: ResolvedIvParams): number[] {
   return block.rows.map(r => r.i2 * params.photoFactor * Lv)
 }
