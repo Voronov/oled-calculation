@@ -146,13 +146,23 @@ export function efficiencyOption(rows: IvComputedRow[]): EChartsOption {
   }
 }
 
-export function currentOption(rows: IvComputedRow[]): EChartsOption {
+export function currentOption(rows: IvComputedRow[], photocurrent: number[]): EChartsOption {
+  const square = { showSymbol: true, symbol: 'rect', symbolSize: 6, lineStyle: { width: 1 } }
+
   return {
-    grid: { left: 68, right: 18, top: 42, bottom: 46 },
-    legend: legend(),
-    xAxis: xAxis('voltage, V'),
-    yAxis: yAxis('current density, mA/cm²'),
-    series: [line('current density, mA/cm²', '#374151', rows.map(r => [r.a, r.b] as Point))],
+    grid: { left: 68, right: 78, top: 42, bottom: 46 },
+    legend: { ...legend(), top: 2, left: undefined, right: 120, width: undefined, orient: 'vertical' },
+    xAxis: xAxis('Voltage, V'),
+    yAxis: [
+      yAxis('current density, mA/cm²', { min: 0, splitLine: { show: false } }),
+      seriesAxis('photodiode current, A', '#ef4444', {
+        type: 'log', position: 'right', nameGap: 56, splitLine: { show: false },
+      }),
+    ],
+    series: [
+      line('mA/cm²', '#374151', rows.map(r => [r.a, r.b] as Point), { yAxisIndex: 0, ...square }),
+      line('|I2|, A', '#ef4444', rows.map((r, i) => [r.a, positive(Math.abs(photocurrent[i]))] as Point), { yAxisIndex: 1, ...square }),
+    ],
   }
 }
 

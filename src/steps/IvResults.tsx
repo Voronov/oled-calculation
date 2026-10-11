@@ -247,7 +247,7 @@ const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOv
 
   const efficiency = useMemo(() => efficiencyOption(rows), [rows])
   const sweep = useMemo(() => sweepOption(rows), [rows])
-  const current = useMemo(() => currentOption(rows), [rows])
+  const current = useMemo(() => currentOption(rows, block.rows.map(r => r.i2)), [rows, block])
   const columns = Kr === null ? COLUMNS.filter(c => c.key === 'a' || c.key === 'b') : COLUMNS
 
   if (Kr === null) {
@@ -255,7 +255,7 @@ const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOv
       <>
         <div className="iv-charts">
           <Chart
-            title="Густина струму від напруги"
+            title="Густина струму та струм фотодіода від напруги"
             option={current}
             exportName={`case-${block.index}-current`}
             logToggle
