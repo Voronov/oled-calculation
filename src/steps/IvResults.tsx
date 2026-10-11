@@ -296,9 +296,13 @@ const ComputedView: FC<ComputedViewProps> = ({
         <span className="iv-param__note">
           {brightnessFromOverride === undefined ? 'авто — з першої точки, після якої яскравість ≥ 1 кд/м²' : 'вписано вручну'}
         </span>
-        {brightnessFromOverride !== undefined && (
-          <button className="iv-param__reset" onClick={() => onBrightnessFrom(null)}>Авто</button>
-        )}
+        <button
+          className="iv-param__reset"
+          disabled={brightnessFromOverride === undefined}
+          onClick={() => onBrightnessFrom(null)}
+        >
+          Авто
+        </button>
       </div>
 
       <div className="iv-charts">
