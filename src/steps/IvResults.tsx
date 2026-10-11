@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext'
 import Chart from '../components/Chart'
 import { currentOption, efficiencyOption, sweepOption } from '../charts/options'
 import { computeLv } from '../utils/calculate'
-import { computeIvBlock, peakInfo, DEFAULT_IV_PARAMS, type ResolvedIvParams, type PeakInfo } from '../utils/ivCalc'
+import { autoBrightnessFrom, computeIvBlock, peakInfo, DEFAULT_IV_PARAMS, type ResolvedIvParams, type PeakInfo } from '../utils/ivCalc'
 import type { IvBlock, IvComputedRow, IvParams } from '../types'
 import Formula from '../components/Formula'
 import { TEX } from '../charts/tex'
@@ -18,7 +18,7 @@ function fmt(v: number | null): string {
 
 const IvResults: FC = () => {
   const { state, dispatch } = useApp()
-  const { ivData, normalizedData, selectedConditionIndex, calcResults, ivParams, lvParams, ivBaselines } = state
+  const { ivData, normalizedData, selectedConditionIndex, calcResults, ivParams, lvParams, ivBaselines, ivBrightnessFrom } = state
   const [activeCase, setActiveCase] = useState(0)
   const [tab, setTab] = useState<'raw' | 'computed'>('computed')
 
@@ -110,6 +110,8 @@ const IvResults: FC = () => {
             params={resolved}
             baselineOverride={ivBaselines[block.index]}
             onBaseline={b => dispatch({ type: 'SET_IV_BASELINE', payload: { index: block.index, baseline: b } })}
+            brightnessFromOverride={ivBrightnessFrom[block.index]}
+            onBrightnessFrom={v => dispatch({ type: 'SET_IV_BRIGHTNESS_FROM', payload: { index: block.index, voltage: v } })}
           />}
 
     </div>
@@ -235,9 +237,13 @@ interface ComputedViewProps {
   params: ResolvedIvParams
   baselineOverride: number | undefined
   onBaseline: (baseline: number | null) => void
+  brightnessFromOverride: number | undefined
+  onBrightnessFrom: (voltage: number | null) => void
 }
 
-const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOverride, onBaseline }) => {
+const ComputedView: FC<ComputedViewProps> = ({
+  block, Kr, Lv, params, baselineOverride, onBaseline, brightnessFromOverride, onBrightnessFrom,
+}) => {
   const { rows, baseline, turnOnIndex } = useMemo(
     () => (Kr !== null && Lv !== null
       ? computeIvBlock(block, Kr, Lv, params, baselineOverride)
@@ -246,7 +252,8 @@ const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOv
   )
 
   const efficiency = useMemo(() => efficiencyOption(rows), [rows])
-  const sweep = useMemo(() => sweepOption(rows), [rows])
+  const brightnessFrom = brightnessFromOverride ?? autoBrightnessFrom(rows)
+  const sweep = useMemo(() => sweepOption(rows, brightnessFrom), [rows, brightnessFrom])
   const current = useMemo(() => currentOption(rows, block.rows.map(r => r.i2)), [rows, block])
   const columns = Kr === null ? COLUMNS.filter(c => c.key === 'a' || c.key === 'b') : COLUMNS
 
@@ -279,6 +286,18 @@ const ComputedView: FC<ComputedViewProps> = ({ block, Kr, Lv, params, baselineOv
         </span>
         {baselineOverride !== undefined && (
           <button className="iv-param__reset" onClick={() => onBaseline(null)}>Авто</button>
+        )}
+      </div>
+
+      <div className="iv-baseline">
+        <span className="iv-param__label">Яскравість на графіку від</span>
+        <ParamInput value={brightnessFrom ?? 0} onChange={onBrightnessFrom} />
+        <span className="iv-param__unit">В</span>
+        <span className="iv-param__note">
+          {brightnessFromOverride === undefined ? 'авто — з першої точки, після якої яскравість ≥ 1 кд/м²' : 'вписано вручну'}
+        </span>
+        {brightnessFromOverride !== undefined && (
+          <button className="iv-param__reset" onClick={() => onBrightnessFrom(null)}>Авто</button>
         )}
       </div>
 

@@ -9,11 +9,12 @@ import {
 import { TEX } from '../charts/tex'
 import { analyzeColor } from './colorimetry'
 import { cieDataUrl } from '../charts/cie'
-import { computeIvBlock, type ResolvedIvParams } from './ivCalc'
+import { autoBrightnessFrom, computeIvBlock, type ResolvedIvParams } from './ivCalc'
 import type { CalcResults, IvBlock, IvComputedRow, LvParams, NormalizedData, ParsedData } from '../types'
 
 export interface ReportInput {
   ivBaselines: Record<number, number>
+  ivBrightnessFrom: Record<number, number>
   parsed: ParsedData
   ivFileName: string | null
   normalized: NormalizedData
@@ -91,7 +92,7 @@ function summarize(rows: IvComputedRow[]) {
 export function buildReportHtml(input: ReportInput): string {
   const {
     parsed, ivFileName, normalized, conditionLabels, selectedConditionIndex,
-    results, lvParams, Lv, ivBlocks, ivParams, ivBaselines,
+    results, lvParams, Lv, ivBlocks, ivParams, ivBaselines, ivBrightnessFrom,
   } = input
 
   const { T2, T1, T0, Kr, FF } = results
@@ -224,7 +225,7 @@ export function buildReportHtml(input: ReportInput): string {
       const { rows, baseline: caseBaseline, turnOnIndex } = computeIvBlock(block, Kr, Lv, ivParams, ivBaselines[block.index])
       const s = summarize(rows)
       const efficiency = renderToDataUrl(efficiencyOption(rows), 760, 380)
-      const sweep = renderToDataUrl(sweepOption(rows), 760, 380)
+      const sweep = renderToDataUrl(sweepOption(rows, ivBrightnessFrom[block.index] ?? autoBrightnessFrom(rows)), 760, 380)
 
       return `
         <section class="case">

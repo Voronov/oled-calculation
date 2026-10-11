@@ -15,7 +15,7 @@ const Step3Report: FC = () => {
   const { state, dispatch } = useApp()
   const {
     parsedData, ivData, normalizedData, selectedConditionIndex,
-    calcResults, ivParams, lvParams, ivBaselines,
+    calcResults, ivParams, lvParams, ivBaselines, ivBrightnessFrom,
   } = state
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -46,8 +46,9 @@ const Step3Report: FC = () => {
       ivBlocks: ivData?.blocks ?? [],
       ivParams: resolved,
       ivBaselines,
+      ivBrightnessFrom,
     }
-  }, [parsedData, ivData, normalizedData, selectedConditionIndex, calcResults, ivParams, lvParams, ivBaselines])
+  }, [parsedData, ivData, normalizedData, selectedConditionIndex, calcResults, ivParams, lvParams, ivBaselines, ivBrightnessFrom])
 
   useEffect(() => {
     if (!ready) return

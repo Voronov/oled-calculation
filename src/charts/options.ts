@@ -166,7 +166,7 @@ export function currentOption(rows: IvComputedRow[], photocurrent: number[]): EC
   }
 }
 
-export function sweepOption(rows: IvComputedRow[]): EChartsOption {
+export function sweepOption(rows: IvComputedRow[], brightnessFrom: number | null): EChartsOption {
   const square = { showSymbol: true, symbol: 'rect', symbolSize: 6, lineStyle: { width: 1 } }
 
   return {
@@ -181,7 +181,7 @@ export function sweepOption(rows: IvComputedRow[]): EChartsOption {
     ],
     series: [
       line('mA/cm²', '#374151', rows.map(r => [r.a, r.b] as Point), { yAxisIndex: 0, ...square }),
-      line('cd/m²', '#ef4444', rows.map(r => [r.a, positive(r.c)] as Point), { yAxisIndex: 1, ...square }),
+      line('cd/m²', '#ef4444', rows.map(r => [r.a, brightnessFrom !== null && r.a < brightnessFrom ? null : positive(r.c)] as Point), { yAxisIndex: 1, ...square }),
     ],
   }
 }

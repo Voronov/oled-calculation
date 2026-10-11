@@ -90,6 +90,7 @@ export interface AppState {
   ivData: IvData | null
   ivParams: IvParams
   ivBaselines: Record<number, number>
+  ivBrightnessFrom: Record<number, number>
 }
 
 export type AppAction =
@@ -101,6 +102,7 @@ export type AppAction =
   | { type: 'SET_IV_DATA'; payload: IvData | null }
   | { type: 'SET_IV_PARAMS'; payload: IvParams }
   | { type: 'SET_IV_BASELINE'; payload: { index: number; baseline: number | null } }
+  | { type: 'SET_IV_BRIGHTNESS_FROM'; payload: { index: number; voltage: number | null } }
   | { type: 'SET_CONDITIONS'; payload: number[] }
   | { type: 'CLEAR_PARSED_DATA' }
   | { type: 'SET_STEP'; payload: number }

@@ -13,6 +13,7 @@ const initialState: AppState = {
   ivData: null,
   ivParams: DEFAULT_IV_PARAMS,
   ivBaselines: {},
+  ivBrightnessFrom: {},
 }
 
 function reducer(state: AppState, action: AppAction): AppState {
@@ -24,6 +25,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         ivData: state.ivData,
         ivParams: state.ivParams,
         ivBaselines: state.ivBaselines,
+        ivBrightnessFrom: state.ivBrightnessFrom,
         parsedData: action.payload,
       }
     case 'SET_NORMALIZED_DATA':
@@ -44,6 +46,12 @@ function reducer(state: AppState, action: AppAction): AppState {
       else next[action.payload.index] = action.payload.baseline
       return { ...state, ivBaselines: next }
     }
+    case 'SET_IV_BRIGHTNESS_FROM': {
+      const next = { ...state.ivBrightnessFrom }
+      if (action.payload.voltage === null) delete next[action.payload.index]
+      else next[action.payload.index] = action.payload.voltage
+      return { ...state, ivBrightnessFrom: next }
+    }
     case 'SET_CONDITIONS':
       if (!state.parsedData) return state
       return {
@@ -58,6 +66,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         ivData: state.ivData,
         ivParams: state.ivParams,
         ivBaselines: state.ivBaselines,
+        ivBrightnessFrom: state.ivBrightnessFrom,
       }
     case 'SET_STEP':
       return { ...state, currentStep: action.payload }

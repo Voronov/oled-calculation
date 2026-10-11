@@ -63,6 +63,17 @@ export function autoBaseline(luminanceRaw: number[]): number {
   return turnOn > 0 ? Math.abs(luminanceRaw[turnOn - 1]) : 0
 }
 
+const BRIGHTNESS_FLOOR = 1
+
+// voltage from which brightness stays at or above 1 cd/m² to the end of the sweep
+export function autoBrightnessFrom(rows: IvComputedRow[]): number | null {
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const c = rows[i].c
+    if (c === null || c < BRIGHTNESS_FLOOR) return rows[i + 1]?.a ?? null
+  }
+  return rows[0]?.a ?? null
+}
+
 export function luminanceRawOf(block: IvBlock, Lv: number, params: ResolvedIvParams): number[] {
   return block.rows.map(r => r.i2 * params.photoFactor * Lv)
 }
